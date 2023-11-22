@@ -1,0 +1,39 @@
+---
+- hosts: all
+  user: root
+  become: yes
+  tasks:
+    - name: git installation
+      yum:
+        name: git
+        state: present
+    - name: maven installation
+      yum:
+        name: maven
+        state: present
+    - name: download tomcat
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.83/bin/apache-tomcat-9.0.83.tar.gz
+        dest: /root/
+    - name: extract file
+      unarchive:
+        src: /root/apache-tomcat-9.0.83.tar.gz
+        dest: /root/
+        remote_src: yes
+    - name: clone a github repository
+      git:
+        repo: https://github.com/vijaya003/live01.git
+        dest: /root/live01
+        clone: yes
+        update: yes
+    - name: maven build
+      command:
+        cmd: mvn clean package
+        chdir: /root/live01
+    - name: Start Tomcat
+      shell: nohup /root/apache-tomcat-9.0.83/bin/startup.sh
+    - name: deploy
+      copy:
+        src: /root/live01/target/live.war
+        dest: /root/apache-tomcat-9.0.83/webapps
+        remote_src: yes
